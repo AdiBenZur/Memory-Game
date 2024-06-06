@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UserInterface;
 
 namespace Main
 {
@@ -10,7 +11,8 @@ namespace Main
     {
         public static void Main()
         {
-            Console.WriteLine("hi");
+            MemoryGameUserinterface memoryGameUserinterface = new MemoryGameUserinterface();
+            memoryGameUserinterface.Activate();
         }
     }
 }
