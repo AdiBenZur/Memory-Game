@@ -12,11 +12,13 @@ namespace MemoryGame
         private int m_Row;
         private int m_Col;
 
+
         public LocationOfCell(int i_Row, int i_Col)
         {
             m_Row = i_Row;
             m_Col = i_Col;
         }
+
 
         public int Row
         {
@@ -43,14 +45,13 @@ namespace MemoryGame
         }
     }
 
-    /// ///////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////
 
     public class Cell
     {
         private char m_Value;
         private LocationOfCell m_CellLocation;
-        private LocationOfCell m_CoupleLocation;
-        private bool v_IsExposed = false;
+        private bool m_IsExposed;
         
         public char Value
         {
@@ -64,20 +65,30 @@ namespace MemoryGame
             }
         }
 
-        public Cell(int i_Row, int i_Col, char i_Value, LocationOfCell i_CoupleLocation)
+        public Cell(int i_Row, int i_Col, char i_Value)
         {
             m_CellLocation = new LocationOfCell(i_Row, i_Col);
             m_Value = i_Value;
-            m_CoupleLocation = i_CoupleLocation;
+            m_IsExposed = false;
         }
-
+ 
         public bool IsExposed()
         {
-            return this.v_IsExposed;
+            return this.m_IsExposed;
+        }
+
+        public void SetExposed()
+        {
+            this.m_IsExposed = true;
+        }
+
+        public void UndoExposed()
+        {
+            this.m_IsExposed = false;   
         }
     }
 
-    /// ///////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////
     public class User
     {
         private string m_Name = null;
@@ -133,11 +144,12 @@ namespace MemoryGame
     {
         private uint m_BoardRows = 0;
         private uint m_BoardCols = 0;
-        private uint m_Turn = 0;
+        private uint m_Turn = 1;
         private uint m_TakenCells = 0;
         private Cell[,] m_MatrixBoard = null;
         private User m_FirstUser;
         private User m_SecondUser;
+      
 
         public uint Rows
         {
@@ -187,22 +199,42 @@ namespace MemoryGame
             }
         }
 
-        public Cell[,] getMatrixBoard()
+        public User GetUser(string i_numberOfUser)
         {
-            return m_MatrixBoard;   
+            if(i_numberOfUser.Equals("first"))
+            {
+                return m_FirstUser;
+            }
+            else
+            {
+                return m_SecondUser;
+            }
         }
 
-        public MemoryGameLogic(string i_FirstUserName, string i_SecondUserName, bool i_IsSecondPlayerComputer, uint i_Rows, uint i_Cols)
+        public Cell[,] MatrixBoard
+        {
+            get
+            {
+                return m_MatrixBoard;
+            }
+            
+        }
+
+        public MemoryGameLogic(string i_FirstUserName, string i_SecondUserName, bool i_IsSecondPlayerComputer,uint i_Rows, uint i_Cols)
         {
             m_FirstUser = new User(i_FirstUserName, false);
             m_SecondUser = new User(i_SecondUserName, i_IsSecondPlayerComputer);
-            m_MatrixBoard = new Cell[i_Rows,  i_Cols];
+            m_MatrixBoard = new Cell[i_Rows, i_Cols];
             m_BoardCols = i_Cols;
             m_BoardRows = i_Rows;
+
+            InitializeBoard();
         }
 
         public void InitializeBoard()
         {
+            // Set couples and their value. Set locations.
+
             char charToInsert = 'A';
             List<LocationOfCell> alreadyRaffledCells = new List<LocationOfCell>(); // List of full cells
             Random random = new Random();
@@ -212,24 +244,24 @@ namespace MemoryGame
             {
                 // Raffled two cell's locations
                 int firstCellRow = random.Next(0, (int)m_BoardRows - 1);
-                int firstCellCol = random.Next(0, (int)m_BoardRows - 1);
+                int firstCellCol = random.Next(0, (int)m_BoardCols - 1);
 
                 // Check if this cell already Raffled
                 while (isCellAlreadyRaffled(alreadyRaffledCells, firstCellRow, firstCellCol))
                 {
                     firstCellRow = random.Next(0, (int)m_BoardRows - 1);
-                    firstCellCol = random.Next(0, (int)m_BoardRows - 1);
+                    firstCellCol = random.Next(0, (int)m_BoardCols - 1);
                 }
 
                 alreadyRaffledCells.Add(new LocationOfCell(firstCellRow, firstCellCol));
 
                 int secondCellRow = random.Next(0, (int)m_BoardRows - 1);
-                int secondCellCol = random.Next(0, (int)m_BoardRows - 1);
+                int secondCellCol = random.Next(0, (int)m_BoardCols - 1);
 
-                while (isCellAlreadyRaffled(alreadyRaffledCells, firstCellRow, firstCellCol))
+                while (isCellAlreadyRaffled(alreadyRaffledCells, secondCellRow, secondCellCol))
                 {
-                    firstCellRow = random.Next(0, (int)m_BoardRows - 1);
-                    firstCellCol = random.Next(0, (int)m_BoardRows - 1);
+                    secondCellRow = random.Next(0, (int)m_BoardRows - 1);
+                    secondCellCol = random.Next(0, (int)m_BoardCols - 1);
                 }
 
                 alreadyRaffledCells.Add(new LocationOfCell(secondCellRow, secondCellCol));
@@ -239,45 +271,32 @@ namespace MemoryGame
                 m_MatrixBoard[secondCellRow, secondCellCol].Value = charToInsert;
 
                 // Move to next char
-                charToInsert += '1';
+                charToInsert++ ;
             }
         }
 
         private bool isCellAlreadyRaffled(List<LocationOfCell> i_RaffledCellsList, int i_Rows, int i_Cols)
         {
-            bool isInList = true;
+            bool isInList = false;
 
             for (int i = 0; i < i_RaffledCellsList.Count; i++)
             {
                 if (i_RaffledCellsList[i].Row == i_Rows && i_RaffledCellsList[i].Col == i_Cols)
                 {
-                    isInList = false;
+                    isInList = true;
+                    break;
                 }
             }
 
-            return !isInList;
+            return isInList;
         }
 
-        public bool IsBoardSizeEven()
+        public static bool IsBoardSizeEven(uint i_Rows,  uint i_Cols)
         {
-            return (m_BoardRows * m_BoardCols) % 2 == 0 ;
-        }
-
-        public void CurrentTurn()
-        {
+            return (i_Rows * i_Cols) % 2 == 0;
 
         }
-        public void SwitchToNextPlayer()
-        {
-            if(m_Turn == 0)
-            {
-                m_Turn = 1;
-            }
-            else
-            {
-                m_Turn = 0;
-            }
-        }
+
         public string WhichPlayerWon()
         {
             if(m_FirstUser.NumberOfPoints > m_SecondUser.NumberOfPoints)
@@ -293,6 +312,7 @@ namespace MemoryGame
                 return "Its a Tie.";
             }
         }
+
         public bool IsBoardFull()
         {
             return m_TakenCells == m_BoardCols * m_BoardRows;
@@ -302,5 +322,132 @@ namespace MemoryGame
         {
             return m_MatrixBoard[i_Row, i_Col].IsExposed();
         }
+
+        public void SetExpose(int i_Row, int i_Col)
+        {
+            m_MatrixBoard[i_Row, i_Col].SetExposed();
+        }
+
+        public void UndoExposed(int i_Row, int i_Col)
+        {
+            m_MatrixBoard[i_Row, i_Col].UndoExposed();
+        }
+
+        public bool CheckIfCuple(LocationOfCell i_FirstLocation , LocationOfCell i_SecondLocation)
+        {
+            bool isCuple = true;
+            if (MatrixBoard[i_FirstLocation.Row, i_FirstLocation.Col].Value != MatrixBoard[i_SecondLocation.Row, i_SecondLocation.Col].Value)
+            {
+                UndoExposed(i_FirstLocation.Row,i_FirstLocation.Col);
+                UndoExposed(i_SecondLocation.Row,i_SecondLocation.Col);
+                isCuple = false;
+            }
+            else
+            {
+                m_TakenCells += 2;
+            }
+            return isCuple;
+        }
+         
+        public bool isCellLocationValid(int i_CellRow, int i_CellCol, out string o_ErrorMsg)
+        {
+            bool isCellValid = false;
+
+            if (!(i_CellRow >= 0 && i_CellRow < m_BoardRows && i_CellCol >= 0 && i_CellCol < m_BoardCols))
+            {
+                o_ErrorMsg = "The cell is out of range. Try again.";
+            }
+            else
+            {
+                if (IsCellExposed(i_CellRow, i_CellCol))
+                {
+                    o_ErrorMsg = "This cell is already exposed. Try again.";
+
+                }
+
+                o_ErrorMsg = null;
+                isCellValid = true;
+            }
+
+            return isCellValid;
+        }
+
+        public void RandomCellsLocation(out LocationOfCell o_FirstLocationCell, out LocationOfCell o_secondLocationCell)
+        {
+            int firstCellRow = 0;
+            int firstCellCol = 0;
+            int secondCellRow = 0;
+            int secondCellCol = 0;
+            o_FirstLocationCell = new LocationOfCell();
+            o_secondLocationCell = new LocationOfCell();
+
+            Random random = new Random();
+            do
+            {
+                firstCellRow = random.Next(0, (int)Rows - 1);
+                firstCellCol = random.Next(0, (int)Cols - 1);
+
+            }
+            while (!IsCellExposed(firstCellRow, firstCellCol));
+
+            o_FirstLocationCell.Row = firstCellRow;
+            o_FirstLocationCell.Col = firstCellCol;
+
+            do
+            {
+                secondCellRow = random.Next(0, (int)Rows - 1);
+                secondCellCol = random.Next(0, (int)Cols - 1);
+               
+            }
+            while (!IsCellExposed(secondCellRow,secondCellCol));
+
+            o_secondLocationCell.Row  = secondCellRow;
+            o_secondLocationCell.Col = secondCellCol;
+        }
+
+        public void NextTurn(LocationOfCell i_FirstLocation, LocationOfCell i_SecondLocation)
+        {
+            if(CheckIfCuple(i_FirstLocation, i_SecondLocation))
+            {
+                if  (Turn == 1)
+                {
+                    m_FirstUser.NumberOfPoints += 1;
+                }
+                else
+                {
+                    m_SecondUser.NumberOfPoints += 1;
+                }
+            }
+
+           if(Turn == 1)
+            {
+                Turn = 2;
+            }
+            else
+            {
+                Turn =  1;
+            }
+        }
+
+        public bool IsComputerPlaying()
+        {
+            bool isComputerPlaying = false;
+
+            if (m_Turn == 1)
+            {
+                // Player 1 is playing
+
+                isComputerPlaying = m_FirstUser.IsComputer;
+            }
+            else
+            {
+                // Player 2 is playing
+                isComputerPlaying = m_SecondUser.IsComputer;
+            }
+
+            return isComputerPlaying;
+        }
+
     }
+
 }

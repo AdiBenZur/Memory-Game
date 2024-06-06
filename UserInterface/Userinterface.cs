@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using MemoryGame;
 using Ex02.ConsoleUtils;
-using System.Diagnostics;
 
 namespace UserInterface
 {
@@ -19,18 +15,52 @@ namespace UserInterface
     public class MemoryGameUserinterface
     {
         private MemoryGameLogic m_MemoryGame;
-        private bool v_IsAgainstComputer;
+        private bool m_IsAgainstComputer;
         private const string k_QuitSign = "Q";
         public const uint k_MaxBoardSize = 6;
         public const uint k_MinBoardSize = 4;
 
         public void Activate()
         {
-            startScreenAndScanUserName();
-            chooseIfPlayAgainstUmanOrComputer();
+            bool isPlayingGame = true;
+            bool playingCurrentGame = true;
+            string firstPlayerUsername, secondPlayerUsername;
+            uint rowsSize, colsSize;
+            bool isPressQ = false;
+
+            startScreenAndScanUserName(out firstPlayerUsername);
+            chooseIfPlayAgainstHumanOrComputer(out secondPlayerUsername);
+
+            while (isPlayingGame)
+            {
+                // scan board size from user 
+                scanBoardFromUser(out rowsSize, out colsSize);
+                m_MemoryGame = new MemoryGameLogic(firstPlayerUsername, secondPlayerUsername, m_IsAgainstComputer, rowsSize, colsSize);
+
+                printBoard();
+                
+                while (playingCurrentGame)
+                {
+                    playingCurrentGame = PlayTurn(m_MemoryGame.IsComputerPlaying(),out isPressQ);
+                    if(isPressQ)
+                    {
+                        playingCurrentGame = false;
+                        isPlayingGame = false;
+                    }
+                }
+
+                Console.WriteLine($"Do you want to play another game? ({k_QuitSign} - no, any key - yes)");
+                string anotherGameOrQuit = Console.ReadLine();
+                if ( anotherGameOrQuit.Equals(k_QuitSign))
+                {
+                    isPlayingGame = false;
+                }
+            }
+
+            Console.WriteLine("Bye Bye! :)");
         }
 
-        private void startScreenAndScanUserName()
+        private void startScreenAndScanUserName(out string o_Username)
         {
             Screen.Clear();
 
@@ -46,11 +76,10 @@ namespace UserInterface
             Console.WriteLine(openingMessage.ToString());
 
             Console.WriteLine("Enter your name: ");
-            string username = Console.ReadLine();
-            // Set user name in game
+            o_Username =  Console.ReadLine();
         }
 
-        private void chooseIfPlayAgainstUmanOrComputer()
+        private void chooseIfPlayAgainstHumanOrComputer(out string o_SecondPlayerName)
         {
             Console.WriteLine("Against who you want to play? ({0} / {1}):", ePlayersSign.Computer.ToString(), ePlayersSign.Human.ToString());
             string playerSignStr = Console.ReadLine();
@@ -64,20 +93,35 @@ namespace UserInterface
 
             if (playerSign == ePlayersSign.Human)
             {
-                v_IsAgainstComputer = false;
+                m_IsAgainstComputer = false;
                 Console.WriteLine("Enter other player name: ");
-                string username = Console.ReadLine();
-                // Set user name in game
-
+                o_SecondPlayerName = Console.ReadLine();
             }
             else
             {
-                v_IsAgainstComputer = true;
-                // Set user name in game
+                m_IsAgainstComputer = true;
+                o_SecondPlayerName = "Computer";
             }
         }
 
-        private void scanBoardSizeFromUser()
+        private void scanBoardFromUser(out uint o_RowsSize, out uint o_ColsSize)
+        {
+            bool isInputValid = true;
+
+            do
+            {
+                scanRowsAndCols(out o_RowsSize, out o_ColsSize);
+                if (!MemoryGameLogic.IsBoardSizeEven(o_ColsSize, o_RowsSize))
+                {
+                    Console.WriteLine("Input is invalid! The board size shoul be even. Try again.");
+                    isInputValid = false;
+                }
+            } 
+            while (!isInputValid);
+        }
+
+     
+        private void scanRowsAndCols(out uint o_RowsSize, out uint o_ColsSize)
         {
             string rowsStr;
             uint rowsSize;
@@ -98,8 +142,8 @@ namespace UserInterface
             }
             while (!(uint.TryParse(rowsStr, out rowsSize)) || rowsSize < k_MinBoardSize || rowsSize > k_MaxBoardSize);
 
-            m_MemoryGame.Rows = rowsSize;
             isInputValid = true;
+            o_RowsSize = rowsSize;
 
             Console.WriteLine("Enter cols size (choose between {0} - {1}): ", k_MinBoardSize, k_MaxBoardSize);
             do
@@ -115,68 +159,111 @@ namespace UserInterface
             }
             while (!(uint.TryParse(colsStr, out colsSize)) || colsSize < k_MinBoardSize || colsSize > k_MaxBoardSize);
 
-            m_MemoryGame.Cols = colsSize;
+            o_ColsSize = colsSize;
         }
 
-        public void PlayTurn()
+        public bool PlayTurn(bool i_IsComputer, out bool o_IsPressQ)
         {
-            
+            LocationOfCell firstLocationCell ;
+            LocationOfCell secondLocationCell;
+            o_IsPressQ = false;
+
+            if (i_IsComputer)
+            {
+                m_MemoryGame.RandomCellsLocation(out firstLocationCell, out secondLocationCell);
+            }
+            else
+            {
+                ScanCellsLocations(out firstLocationCell, out secondLocationCell, out o_IsPressQ);
+            }
+
+            m_MemoryGame.NextTurn(firstLocationCell, secondLocationCell);
+
+            // Check if the game is over
+            return m_MemoryGame.IsBoardFull();
         }
 
-        public void scanCellsLocations()
+        
+        public void ScanCellsLocations(out LocationOfCell o_FirstLocationCell, out LocationOfCell o_SecondLocationCell, out bool o_IsPressQ)
         {
-            Console.WriteLine("Enter first cell row and col (e.g. 1B): ");
-            string firstCellLocationInput = Console.ReadLine();
-        }
+            string firstCellLocationInput;
+            string secondCellLocationInput;
+            o_IsPressQ = false;
 
-        private void isCellLocationValid(string i_CellLocation)
-        {
-            bool isCellValid = true;
-            int row;
-            char col;
+            // Initialize default values in case of pressing 'Q'
+            o_FirstLocationCell = new LocationOfCell(-1, -1);
+            o_SecondLocationCell = new LocationOfCell(-1, -1);
 
             do
             {
-                if (string.IsNullOrEmpty(i_CellLocation) || i_CellLocation.Length != 2)
+                Console.WriteLine("Enter first cell row and col (e.g. 1B): ");
+                firstCellLocationInput = Console.ReadLine();
+                if(firstCellLocationInput.Equals(k_QuitSign))
                 {
-                    Console.WriteLine("Invalid input! It should contain a number and a letter only. Try again.");
-                    isCellValid = false;
+                   o_IsPressQ = true;
+                   break;
+                }
+            }
+            while  (!isCellLocationValid(firstCellLocationInput, out o_FirstLocationCell));
+
+            if  (!o_IsPressQ)
+            {
+                do
+                {
+                    Console.WriteLine("Enter second cell row and col (e.g. 1B): ");
+                    secondCellLocationInput = Console.ReadLine();
+                    if  (firstCellLocationInput.Equals(k_QuitSign))
+                    {
+                        o_IsPressQ = true;
+                        break;
+                    }
+                }
+                while (!isCellLocationValid(secondCellLocationInput, out o_SecondLocationCell));
+            }
+        }
+
+        private bool isCellLocationValid(string i_CellLocationInput, out  LocationOfCell o_UserCellLocationChoice)
+        {
+            bool isCellValid = false;
+            int row;
+            char col;
+            o_UserCellLocationChoice = new LocationOfCell(-1,-1);
+           
+
+            if (string.IsNullOrEmpty(i_CellLocationInput) || i_CellLocationInput.Length != 2)
+            {
+                Console.WriteLine("Invalid input! It should contain a number and a letter only. Try again.");
+            }
+            else
+            {
+                // Seperate the input to row and col
+                if (!TryParseInput(i_CellLocationInput, out row, out col))
+                {
+                    Console.WriteLine("Invalid input! It should first contain a number (row) and then a letter (col). Try again.");
                 }
                 else
                 {
-                    // Seperate the input to row and col
-                    if (!TryParseInput(i_CellLocation, out row, out col))
+                    // The input is in the right way, need to continue the validation from the logic
+                    int rowInBoardMatrix = row - 1;
+                    int colInBoardMatrix = convertColLetterToColInMatrix(col);
+                    string errorMsg = null;
+
+                    if (!m_MemoryGame.isCellLocationValid(rowInBoardMatrix, colInBoardMatrix, out errorMsg))
                     {
-                        Console.WriteLine("Invalid input! It should first contain a number (row) and then a letter (col). Try again.");
-                        isCellValid = false;
+                        Console.WriteLine(errorMsg);
                     }
                     else
                     {
-                        // Check if its in range
-                        int rowInBoardMatrix = row - 1;
-                        int colInBoardMatrix = convertColLetterToColInMatrix(col);
-
-                        if (!(rowInBoardMatrix >= 0 && rowInBoardMatrix < m_MemoryGame.Rows && colInBoardMatrix >= 0 && colInBoardMatrix < m_MemoryGame.Cols))
-                        {
-                            Console.WriteLine("Invalid input! The cell is not in the board. Try again.");
-                            isCellValid = false;
-                        }
-                        else
-                        {
-                            // Check if the cell is not exposed
-                            if (m_MemoryGame.IsCellExposed(rowInBoardMatrix, colInBoardMatrix))
-                            {
-                                Console.WriteLine("Invalid input! The cell is already expose. Try again.");
-                                isCellValid = false;
-                            }
-                        }
+                        // The cell that the user choose in valid.
+                        isCellValid = true;
+                        m_MemoryGame.SetExpose(rowInBoardMatrix, colInBoardMatrix);
+                        o_UserCellLocationChoice.Row = rowInBoardMatrix;
+                        o_UserCellLocationChoice.Col = colInBoardMatrix;
                     }
-
                 }
             }
-            while (!isCellValid);
 
-
+            return isCellValid;
         }
 
         static bool TryParseInput(string i_CellLocationInput, out int o_Row, out char o_Col)
@@ -209,7 +296,46 @@ namespace UserInterface
             i_CollLetter = char.ToUpper(i_CollLetter);
             return i_CollLetter - 'A';
         }
-    }
 
-    
+        private void printBoard()
+        {
+            Screen.Clear();
+
+            StringBuilder boardSb = new StringBuilder();
+
+            for (int i = 0; i < m_MemoryGame.Cols; i ++)
+            {
+                Console.Write("\t");
+
+                Console.Write((char)('A' + i));
+            }
+            Console.Write("\n");
+
+            for (int i = 0; i < m_MemoryGame.Cols; i++)
+            {
+                Console.Write("=====");
+            }
+            Console.Write("\n");
+
+            for (int i = 0; i < m_MemoryGame.Rows; i++)
+            {
+                Console.Write($"{i + 1} ");
+
+                for (int j = 0; j < m_MemoryGame.Cols; j++)
+                {
+                    Console.Write($"|");
+                    if(m_MemoryGame.MatrixBoard[i,j].IsExposed())
+                    {
+                        Console.Write($"{m_MemoryGame.MatrixBoard[i, j].Value} ");
+                    }
+                    else
+                    {
+                        Console.Write("\t");
+
+                    }
+                    Console.Write($"|");
+                }
+            }
+        }
+    }
 }
