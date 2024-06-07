@@ -149,6 +149,7 @@ namespace MemoryGame
         private Cell[,] m_MatrixBoard = null;
         private User m_FirstUser;
         private User m_SecondUser;
+        private List<LocationOfCell> m_UnexposedCellsList = null; 
       
 
         public uint Rows
@@ -219,12 +220,26 @@ namespace MemoryGame
             }
             
         }
+        public string GetCurrentPlayerName()
+        {
+            string currentPlayerName;
 
+            if(Turn == 1)
+            {
+                currentPlayerName = m_FirstUser.Name;
+            }
+            else
+            {
+                currentPlayerName = m_SecondUser.Name;
+            }
+            return currentPlayerName;
+        }
         public MemoryGameLogic(string i_FirstUserName, string i_SecondUserName, bool i_IsSecondPlayerComputer,uint i_Rows, uint i_Cols)
         {
             m_FirstUser = new User(i_FirstUserName, false);
             m_SecondUser = new User(i_SecondUserName, i_IsSecondPlayerComputer);
             m_MatrixBoard = new Cell[i_Rows, i_Cols];
+            m_UnexposedCellsList = new List<LocationOfCell>();
             m_BoardCols = i_Cols;
             m_BoardRows = i_Rows;
             for (int i = 0; i < i_Rows; i++) 
@@ -232,13 +247,16 @@ namespace MemoryGame
                 for (int j = 0; j < i_Cols; j++)
                 {
                     m_MatrixBoard[i, j] = new Cell(i, j, '\0');
+                    m_UnexposedCellsList.Add(new LocationOfCell(i,  j));
                 }
             }
 
-            InitializeBoard();
+            InitializeBoardBySettingValues();
         }
 
-        public void InitializeBoard()
+        
+
+        public void InitializeBoardBySettingValues()
         {
             // Set couples and their value. Set locations.
 
@@ -333,11 +351,13 @@ namespace MemoryGame
         public void SetExpose(int i_Row, int i_Col)
         {
             m_MatrixBoard[i_Row, i_Col].SetExposed();
+            m_UnexposedCellsList.Remove(new LocationOfCell(i_Row,  i_Col));
         }
 
         public void UndoExposed(int i_Row, int i_Col)
         {
             m_MatrixBoard[i_Row, i_Col].UndoExposed();
+            m_UnexposedCellsList.Add(new LocationOfCell(i_Row, i_Col));
         }
 
         public bool CheckIfCuple(LocationOfCell i_FirstLocation , LocationOfCell i_SecondLocation)
@@ -379,37 +399,27 @@ namespace MemoryGame
             return isCellValid;
         }
 
-        public void RandomCellsLocation(out LocationOfCell o_FirstLocationCell, out LocationOfCell o_secondLocationCell)
+        public void RandomOneCellLocation(out LocationOfCell o_LocationCell)
         {
-            int firstCellRow = 0;
-            int firstCellCol = 0;
-            int secondCellRow = 0;
-            int secondCellCol = 0;
-            o_FirstLocationCell = new LocationOfCell();
-            o_secondLocationCell = new LocationOfCell();
+            int cellRow = 0;
+            int cellCol = 0;
+            int indexOfList;
+            o_LocationCell = new LocationOfCell();
 
             Random random = new Random();
             do
             {
-                firstCellRow = random.Next(0, (int)Rows - 1);
-                firstCellCol = random.Next(0, (int)Cols - 1);
-
+                //cellRow = random.Next(0, (int)Rows - 1);
+                //cellCol = random.Next(0, (int)Cols - 1);
+                indexOfList = random.Next(m_UnexposedCellsList.Count);
+                cellRow  = m_UnexposedCellsList[indexOfList].Row;
+                cellCol = m_UnexposedCellsList[indexOfList].Col;
             }
-            while (!IsCellExposed(firstCellRow, firstCellCol));
+            while (IsCellExposed(cellRow, cellCol));
 
-            o_FirstLocationCell.Row = firstCellRow;
-            o_FirstLocationCell.Col = firstCellCol;
-
-            do
-            {
-                secondCellRow = random.Next(0, (int)Rows - 1);
-                secondCellCol = random.Next(0, (int)Cols - 1);
-               
-            }
-            while (!IsCellExposed(secondCellRow,secondCellCol));
-
-            o_secondLocationCell.Row  = secondCellRow;
-            o_secondLocationCell.Col = secondCellCol;
+            o_LocationCell.Row = cellRow;
+            o_LocationCell.Col = cellCol;
+            SetExpose(cellRow, cellCol);
         }
 
         public void NextTurn(LocationOfCell i_FirstLocation, LocationOfCell i_SecondLocation)

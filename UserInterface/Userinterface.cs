@@ -2,6 +2,7 @@
 using System.Text;
 using MemoryGame;
 using Ex02.ConsoleUtils;
+using System.Threading;
 
 namespace UserInterface
 {
@@ -48,7 +49,7 @@ namespace UserInterface
                         isPlayingGame = false;
                     }
                 }
-
+                printBoard();
                 Console.WriteLine($"Do you want to play another game? ({k_QuitSign} - no, any key - yes)");
                 string anotherGameOrQuit = Console.ReadLine();
                 if ( anotherGameOrQuit.Equals(k_QuitSign))
@@ -57,7 +58,7 @@ namespace UserInterface
                 }
             }
 
-            Console.WriteLine("Bye Bye! :)");
+            Console.WriteLine("\nBye Bye! :)");
         }
 
         private void startScreenAndScanUserName(out string o_Username)
@@ -84,7 +85,7 @@ namespace UserInterface
             Console.WriteLine("Against who you want to play? ({0} / {1}):", ePlayersSign.Computer.ToString(), ePlayersSign.Human.ToString());
             string playerSignStr = Console.ReadLine();
             ePlayersSign playerSign;
-            while (!(Enum.TryParse<ePlayersSign>(playerSignStr, out playerSign)))
+            while (!(Enum.TryParse(playerSignStr, out playerSign)) || !Enum.IsDefined(typeof(ePlayersSign), playerSign))
             {
                 Console.WriteLine("Invalid enemy sign input! Try Again.");
                 Console.Write($"{ePlayersSign.Computer} / {ePlayersSign.Human} : ");
@@ -106,10 +107,10 @@ namespace UserInterface
 
         private void scanBoardFromUser(out uint o_RowsSize, out uint o_ColsSize)
         {
-            bool isInputValid = true;
-
+            bool isInputValid;
             do
             {
+                isInputValid = true;
                 scanRowsAndCols(out o_RowsSize, out o_ColsSize);
                 if (!MemoryGameLogic.IsBoardSizeEven(o_ColsSize, o_RowsSize))
                 {
@@ -168,19 +169,27 @@ namespace UserInterface
             LocationOfCell secondLocationCell;
             o_IsPressQ = false;
 
+            printBoard();
+            Console.WriteLine("Its " + m_MemoryGame.GetCurrentPlayerName() + " turn!");
             if (i_IsComputer)
             {
-                m_MemoryGame.RandomCellsLocation(out firstLocationCell, out secondLocationCell);
+                m_MemoryGame.RandomOneCellLocation(out firstLocationCell);
+                printBoard();
+                Thread.Sleep(2000);
+                m_MemoryGame.RandomOneCellLocation(out secondLocationCell);
+                printBoard();
+                Thread.Sleep(2000);
             }
             else
             {
                 ScanCellsLocations(out firstLocationCell, out secondLocationCell, out o_IsPressQ);
             }
 
+            Thread.Sleep(2000);
             m_MemoryGame.NextTurn(firstLocationCell, secondLocationCell);
 
-            // Check if the game is over
-            return m_MemoryGame.IsBoardFull();
+            // Check if the game is over. If not, return that the game is not over yet.
+            return !m_MemoryGame.IsBoardFull();
         }
 
         
@@ -208,6 +217,8 @@ namespace UserInterface
 
             if  (!o_IsPressQ)
             {
+                printBoard();
+
                 do
                 {
                     Console.WriteLine("Enter second cell row and col (e.g. 1B): ");
@@ -219,6 +230,11 @@ namespace UserInterface
                     }
                 }
                 while (!isCellLocationValid(secondCellLocationInput, out o_SecondLocationCell));
+
+                if (!o_IsPressQ)
+                {
+                    printBoard();
+                }
             }
         }
 
@@ -303,39 +319,52 @@ namespace UserInterface
 
             StringBuilder boardSb = new StringBuilder();
 
+            // Add cols letters
+            boardSb.Append("   ");
             for (int i = 0; i < m_MemoryGame.Cols; i ++)
             {
-                Console.Write("\t");
-
-                Console.Write((char)('A' + i));
+                boardSb.Append("   " + (char)('A' + i) + "  ");
             }
-            Console.Write("\n");
+            boardSb.AppendLine();
+            boardSb.Append("   ");
 
+            // Add seperator line
             for (int i = 0; i < m_MemoryGame.Cols; i++)
             {
-                Console.Write("=====");
+                boardSb.Append("======");
             }
-            Console.Write("\n");
+            boardSb.AppendLine("=");
 
+            // Add cells
             for (int i = 0; i < m_MemoryGame.Rows; i++)
             {
-                Console.Write($"{i + 1} ");
-
+                boardSb.Append((i + 1).ToString().PadLeft(2) + " |");
                 for (int j = 0; j < m_MemoryGame.Cols; j++)
                 {
-                    Console.Write($"|");
                     if(m_MemoryGame.MatrixBoard[i,j].IsExposed())
                     {
-                        Console.Write($"{m_MemoryGame.MatrixBoard[i, j].Value} ");
+                        // Need to add value
+                        boardSb.Append("  " + m_MemoryGame.MatrixBoard[i, j].Value + "  |");
                     }
                     else
                     {
-                        Console.Write("\t");
+                        // Dont need to add value
+                        boardSb.Append("     |");
 
                     }
-                    Console.Write($"|");
                 }
+
+                boardSb.AppendLine();
+                boardSb.Append("   ");
+                for (int j = 0; j < m_MemoryGame.Cols; j++)
+                {
+                    boardSb.Append("======");
+                }
+
+                boardSb.AppendLine("=");
             }
+
+            Console.WriteLine(boardSb.ToString());
         }
     }
 }
