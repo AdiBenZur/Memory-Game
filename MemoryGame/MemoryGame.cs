@@ -227,6 +227,13 @@ namespace MemoryGame
             m_MatrixBoard = new Cell[i_Rows, i_Cols];
             m_BoardCols = i_Cols;
             m_BoardRows = i_Rows;
+            for (int i = 0; i < i_Rows; i++) 
+            {
+                for (int j = 0; j < i_Cols; j++)
+                {
+                    m_MatrixBoard[i, j] = new Cell(i, j, '\0');
+                }
+            }
 
             InitializeBoard();
         }
@@ -243,25 +250,25 @@ namespace MemoryGame
             for (int i = 0; i < numberOfLetters; i++)
             {
                 // Raffled two cell's locations
-                int firstCellRow = random.Next(0, (int)m_BoardRows - 1);
-                int firstCellCol = random.Next(0, (int)m_BoardCols - 1);
+                int firstCellRow = random.Next(0, (int)m_BoardRows);
+                int firstCellCol = random.Next(0, (int)m_BoardCols);
 
                 // Check if this cell already Raffled
                 while (isCellAlreadyRaffled(alreadyRaffledCells, firstCellRow, firstCellCol))
                 {
-                    firstCellRow = random.Next(0, (int)m_BoardRows - 1);
-                    firstCellCol = random.Next(0, (int)m_BoardCols - 1);
+                    firstCellRow = random.Next(0, (int)m_BoardRows);
+                    firstCellCol = random.Next(0, (int)m_BoardCols);
                 }
 
                 alreadyRaffledCells.Add(new LocationOfCell(firstCellRow, firstCellCol));
 
-                int secondCellRow = random.Next(0, (int)m_BoardRows - 1);
-                int secondCellCol = random.Next(0, (int)m_BoardCols - 1);
+                int secondCellRow = random.Next(0, (int)m_BoardRows);
+                int secondCellCol = random.Next(0, (int)m_BoardCols);
 
                 while (isCellAlreadyRaffled(alreadyRaffledCells, secondCellRow, secondCellCol))
                 {
-                    secondCellRow = random.Next(0, (int)m_BoardRows - 1);
-                    secondCellCol = random.Next(0, (int)m_BoardCols - 1);
+                    secondCellRow = random.Next(0, (int)m_BoardRows);
+                    secondCellCol = random.Next(0, (int)m_BoardCols);
                 }
 
                 alreadyRaffledCells.Add(new LocationOfCell(secondCellRow, secondCellCol));
