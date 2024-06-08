@@ -8,18 +8,17 @@ using System.Threading.Tasks;
 
 namespace MemoryGame
 {
+    ///////////////////////////////////////////// LocationOfCell /////////////////////////////////////////////
     public struct LocationOfCell
     {
         private int m_Row;
         private int m_Col;
-
 
         public LocationOfCell(int i_Row, int i_Col)
         {
             m_Row = i_Row;
             m_Col = i_Col;
         }
-
 
         public int Row
         {
@@ -46,7 +45,7 @@ namespace MemoryGame
         }
     }
 
-    //////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////// Cell /////////////////////////////////////////////
 
     public class Cell
     {
@@ -89,13 +88,12 @@ namespace MemoryGame
         }
     }
 
-    //////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////// User /////////////////////////////////////////////
     public class User
     {
         private string m_Name = null;
         private int m_NumberOfPoints = 0;
         private bool v_IsComputer;
-
 
         public int NumberOfPoints
         {
@@ -119,6 +117,7 @@ namespace MemoryGame
                 m_Name = value;
             }
         }
+
         public bool IsComputer
         {
             get
@@ -139,7 +138,7 @@ namespace MemoryGame
 
     }
 
-    //////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////// MemoryGameLogic /////////////////////////////////////////////
 
     public class MemoryGameLogic
     {
@@ -152,7 +151,6 @@ namespace MemoryGame
         private User m_SecondUser;
         private List<LocationOfCell> m_UnexposedCellsList = null; 
       
-
         public uint Rows
         {
             get
@@ -237,6 +235,7 @@ namespace MemoryGame
             }
             
         }
+
         public string GetCurrentPlayerName()
         {
             string currentPlayerName;
@@ -301,7 +300,6 @@ namespace MemoryGame
                 }
 
                 alreadyRaffledCells.Add(new LocationOfCell(firstCellRow, firstCellCol));
-
                 int secondCellRow = random.Next(0, (int)m_BoardRows);
                 int secondCellCol = random.Next(0, (int)m_BoardCols);
 
@@ -312,11 +310,9 @@ namespace MemoryGame
                 }
 
                 alreadyRaffledCells.Add(new LocationOfCell(secondCellRow, secondCellCol));
-
                 // Set the value
                 m_MatrixBoard[firstCellRow, firstCellCol].Value = charToInsert;
                 m_MatrixBoard[secondCellRow, secondCellCol].Value = charToInsert;
-
                 // Move to next char
                 charToInsert++ ;
             }
@@ -341,7 +337,6 @@ namespace MemoryGame
         public static bool IsBoardSizeEven(uint i_Rows,  uint i_Cols)
         {
             return (i_Rows * i_Cols) % 2 == 0;
-
         }
 
         public string WhichPlayerWon()
@@ -395,10 +390,11 @@ namespace MemoryGame
             {
                 m_TakenCells += 2;
             }
+
             return isCuple;
         }
          
-        public bool isCellLocationValid(int i_CellRow, int i_CellCol, out string o_ErrorMsg)
+        public bool IsCellLocationValid(int i_CellRow, int i_CellCol, out string o_ErrorMsg)
         {
             bool isCellValid = false;
 
@@ -429,12 +425,10 @@ namespace MemoryGame
             int cellCol = 0;
             int indexOfList;
             o_LocationCell = new LocationOfCell();
-
             Random random = new Random();
+
             do
             {
-                //cellRow = random.Next(0, (int)Rows - 1);
-                //cellCol = random.Next(0, (int)Cols - 1);
                 indexOfList = random.Next(m_UnexposedCellsList.Count);
                 cellRow  = m_UnexposedCellsList[indexOfList].Row;
                 cellCol = m_UnexposedCellsList[indexOfList].Col;
@@ -477,7 +471,6 @@ namespace MemoryGame
             if (m_Turn == 1)
             {
                 // Player 1 is playing
-
                 isComputerPlaying = m_FirstUser.IsComputer;
             }
             else
@@ -490,5 +483,4 @@ namespace MemoryGame
         }
 
     }
-
 }
