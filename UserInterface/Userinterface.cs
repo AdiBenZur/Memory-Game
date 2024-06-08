@@ -18,8 +18,8 @@ namespace UserInterface
         private MemoryGameLogic m_MemoryGame;
         private bool m_IsAgainstComputer;
         private const string k_QuitSign = "Q";
-        public const uint k_MaxBoardSize = 6;
-        public const uint k_MinBoardSize = 4;
+        public const uint k_MaxBoardSize = 4;
+        public const uint k_MinBoardSize = 2;
 
         public void Activate()
         {
@@ -39,7 +39,8 @@ namespace UserInterface
                 m_MemoryGame = new MemoryGameLogic(firstPlayerUsername, secondPlayerUsername, m_IsAgainstComputer, rowsSize, colsSize);
 
                 printBoard();
-                
+                playingCurrentGame = true;
+
                 while (playingCurrentGame)
                 {
                     playingCurrentGame = PlayTurn(m_MemoryGame.IsComputerPlaying(),out isPressQ);
@@ -50,15 +51,18 @@ namespace UserInterface
                     }
                 }
                 printBoard();
+                printMessageWhenGameIsFinish();
                 Console.WriteLine($"Do you want to play another game? ({k_QuitSign} - no, any key - yes)");
                 string anotherGameOrQuit = Console.ReadLine();
                 if ( anotherGameOrQuit.Equals(k_QuitSign))
                 {
                     isPlayingGame = false;
                 }
+               
             }
 
             Console.WriteLine("\nBye Bye! :)");
+            Thread.Sleep(2000);
         }
 
         private void startScreenAndScanUserName(out string o_Username)
@@ -170,15 +174,12 @@ namespace UserInterface
             o_IsPressQ = false;
 
             printBoard();
-            Console.WriteLine("Its " + m_MemoryGame.GetCurrentPlayerName() + " turn!");
             if (i_IsComputer)
             {
                 m_MemoryGame.RandomOneCellLocation(out firstLocationCell);
-                printBoard();
-                Thread.Sleep(2000);
+                printScreenWhenComputerPlay();
                 m_MemoryGame.RandomOneCellLocation(out secondLocationCell);
-                printBoard();
-                Thread.Sleep(2000);
+                printScreenWhenComputerPlay();
             }
             else
             {
@@ -192,7 +193,18 @@ namespace UserInterface
             return !m_MemoryGame.IsBoardFull();
         }
 
-        
+        private void printScreenWhenComputerPlay()
+        {
+            printBoard();
+            printCurrentPlayerName();
+            Thread.Sleep(2000);
+        }
+        private void printCurrentPlayerName()
+        {
+            string currentPlayerName = m_MemoryGame.GetCurrentPlayerName();
+            Console.WriteLine("Its " + currentPlayerName + "'s turn!\n");
+
+        }
         public void ScanCellsLocations(out LocationOfCell o_FirstLocationCell, out LocationOfCell o_SecondLocationCell, out bool o_IsPressQ)
         {
             string firstCellLocationInput;
@@ -202,6 +214,7 @@ namespace UserInterface
             // Initialize default values in case of pressing 'Q'
             o_FirstLocationCell = new LocationOfCell(-1, -1);
             o_SecondLocationCell = new LocationOfCell(-1, -1);
+            printCurrentPlayerName();
 
             do
             {
@@ -218,6 +231,7 @@ namespace UserInterface
             if  (!o_IsPressQ)
             {
                 printBoard();
+                printCurrentPlayerName();
 
                 do
                 {
@@ -266,7 +280,7 @@ namespace UserInterface
 
                     if (!m_MemoryGame.isCellLocationValid(rowInBoardMatrix, colInBoardMatrix, out errorMsg))
                     {
-                        Console.WriteLine(errorMsg);
+                        Console.WriteLine(errorMsg + "\n");
                     }
                     else
                     {
@@ -311,6 +325,37 @@ namespace UserInterface
             // 'A' is 0, 'B' is 1, 'C' is 2 ...
             i_CollLetter = char.ToUpper(i_CollLetter);
             return i_CollLetter - 'A';
+        }
+
+        private void printMessageWhenGameIsFinish()
+        {
+            int firstUserPoints = 0;
+            int secondUserPoints = 0;
+
+            m_MemoryGame.GetPointOfPlayers(out firstUserPoints, out secondUserPoints);
+            StringBuilder usersScoresStr = new StringBuilder();
+            usersScoresStr.Append(m_MemoryGame.FirstUserName + "'s score: ").Append(firstUserPoints).Append(".");
+            usersScoresStr.AppendLine();
+            usersScoresStr.Append(m_MemoryGame.SecondUserName + "'s score: ").Append(secondUserPoints).Append(".");
+
+            if (firstUserPoints > secondUserPoints)
+            {
+                Console.WriteLine("The winner is " + m_MemoryGame.FirstUserName + "!!!");
+            }
+            else
+            {
+                if (secondUserPoints > firstUserPoints)
+                {
+                    Console.WriteLine("The winner is " + m_MemoryGame.SecondUserName + "!!!");
+                }
+                else
+                {
+                    // A tie
+                    Console.WriteLine("It's a tie!");
+                }
+            }
+
+            Console.WriteLine(usersScoresStr.ToString() + "\n");
         }
 
         private void printBoard()

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -200,6 +201,22 @@ namespace MemoryGame
             }
         }
 
+        public string FirstUserName
+        {
+            get
+            {
+                return m_FirstUser.Name;
+            }
+        }
+
+        public string SecondUserName
+        {
+            get
+            {
+                return m_SecondUser.Name;
+            }
+        }
+
         public User GetUser(string i_numberOfUser)
         {
             if(i_numberOfUser.Equals("first"))
@@ -234,6 +251,7 @@ namespace MemoryGame
             }
             return currentPlayerName;
         }
+
         public MemoryGameLogic(string i_FirstUserName, string i_SecondUserName, bool i_IsSecondPlayerComputer,uint i_Rows, uint i_Cols)
         {
             m_FirstUser = new User(i_FirstUserName, false);
@@ -251,14 +269,18 @@ namespace MemoryGame
                 }
             }
 
-            InitializeBoardBySettingValues();
+            initializeBoardBySettingValues();
         }
 
-        
-
-        public void InitializeBoardBySettingValues()
+        public void GetPointOfPlayers(out int o_FirstPlayerPoints, out int o_SecondPlayerPoints)
         {
-            // Set couples and their value. Set locations.
+            o_FirstPlayerPoints = m_FirstUser.NumberOfPoints;
+            o_SecondPlayerPoints = m_SecondUser.NumberOfPoints;
+        }
+
+        private void initializeBoardBySettingValues()
+        {
+            // Set couples and their value. 
 
             char charToInsert = 'A';
             List<LocationOfCell> alreadyRaffledCells = new List<LocationOfCell>(); // List of full cells
@@ -389,11 +411,13 @@ namespace MemoryGame
                 if (IsCellExposed(i_CellRow, i_CellCol))
                 {
                     o_ErrorMsg = "This cell is already exposed. Try again.";
-
+                    isCellValid = false;
                 }
-
-                o_ErrorMsg = null;
-                isCellValid = true;
+                else
+                {
+                    o_ErrorMsg = null;
+                    isCellValid = true;
+                }
             }
 
             return isCellValid;
