@@ -79,7 +79,7 @@ namespace UserInterface
             openingMessage.AppendLine();
             openingMessage.Append("==============================");
             openingMessage.AppendLine();
-            openingMessage.Append($"For quit the game you can enter {k_QuitSign} any time:)");
+            openingMessage.Append($"For quit the game you can enter {k_QuitSign} as long as the game started:)");
             openingMessage.AppendLine();
             Console.WriteLine(openingMessage.ToString());
             Console.WriteLine("Enter your name: ");
