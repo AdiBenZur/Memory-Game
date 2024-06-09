@@ -88,7 +88,7 @@ namespace UserInterface
 
         private void chooseIfPlayAgainstHumanOrComputer(out string o_SecondPlayerName)
         {
-            Console.WriteLine("Against who you want to play? ({0} / {1}):", ePlayersSign.Computer.ToString(), ePlayersSign.Human.ToString());
+            Console.WriteLine("Against who you want to play? press 0 to Computer and 1 for Human.");
             string playerSignStr = Console.ReadLine();
             ePlayersSign playerSign;
             while (!(Enum.TryParse(playerSignStr, out playerSign)) || !Enum.IsDefined(typeof(ePlayersSign), playerSign))
